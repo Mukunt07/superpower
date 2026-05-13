@@ -1,0 +1,141 @@
+.camera-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.camera-video {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.camera-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ─── Loading ─── */
+.camera-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: radial-gradient(ellipse at center, rgba(0, 30, 80, 0.95) 0%, rgba(2, 4, 9, 0.98) 100%);
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(0, 212, 255, 0.2);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+}
+
+.loading-msg {
+  color: var(--accent-cyan);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  animation: pulse-cyan 2s ease infinite;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+}
+
+.loading-progress {
+  width: 200px;
+  height: 2px;
+  background: rgba(0, 212, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  animation: scan-line 1.5s ease infinite;
+  width: 60%;
+}
+
+/* ─── Error ─── */
+.camera-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(2, 4, 9, 0.95);
+  z-index: 10;
+}
+
+.error-icon {
+  font-size: 3rem;
+}
+
+.camera-error p {
+  color: var(--accent-red);
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+}
+
+.error-hint {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 0.85rem !important;
+}
+
+/* ─── Voice Button ─── */
+.voice-btn {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 50px;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-mid);
+  z-index: 20;
+}
+
+.voice-btn:hover {
+  background: rgba(0, 212, 255, 0.15);
+  box-shadow: var(--glow-cyan);
+}
+
+.voice-btn.listening {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+  animation: pulse-cyan 1.5s ease infinite;
+}
+
+.voice-btn.listening:hover {
+  box-shadow: 0 0 20px rgba(255, 34, 68, 0.5);
+}
+
+.voice-icon {
+  font-size: 1rem;
+}

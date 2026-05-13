@@ -1,0 +1,205 @@
+.hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* ─── Corners ─── */
+.hud-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.hud-top-left { top: 16px; left: 16px; }
+.hud-top-right { top: 16px; right: 16px; align-items: flex-end; }
+.hud-bottom-left { bottom: 60px; left: 16px; }
+
+/* ─── Stats ─── */
+.hud-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  backdrop-filter: blur(8px);
+}
+
+.stat-label {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+}
+
+.stat-value {
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
+  min-width: 24px;
+}
+
+.stat-value.warn {
+  color: var(--accent-red);
+  text-shadow: 0 0 10px rgba(255, 34, 68, 0.8);
+}
+
+/* ─── Debug button ─── */
+.debug-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.4);
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all var(--transition-fast);
+}
+
+.debug-btn:hover { border-color: rgba(0, 212, 255, 0.3); color: var(--accent-cyan); }
+.debug-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+/* ─── Active Power ─── */
+.active-power-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  border-left: 3px solid var(--pc, var(--accent-cyan));
+  backdrop-filter: blur(12px);
+  animation: slide-in-right 0.4s ease;
+}
+
+.ap-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 8px var(--pc, rgba(0, 212, 255, 0.8)));
+}
+
+.ap-label {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.ap-name {
+  font-size: 0.7rem;
+  color: var(--pc, var(--accent-cyan));
+  text-shadow: 0 0 10px var(--pc, rgba(0, 212, 255, 0.6));
+  letter-spacing: 1.5px;
+  margin: 0;
+}
+
+/* ─── Gesture Info ─── */
+.gesture-info {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 3px 8px;
+  align-items: center;
+  background: var(--bg-glass);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  backdrop-filter: blur(8px);
+  min-width: 180px;
+}
+
+.gi-label {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+  grid-column: 1 / -1;
+}
+
+.gi-gesture {
+  font-size: 0.7rem;
+  color: var(--accent-gold);
+  text-shadow: var(--glow-gold);
+  letter-spacing: 1px;
+  grid-column: 1;
+}
+
+.gi-conf {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-ui);
+  grid-column: 3;
+}
+
+.gi-bar {
+  grid-column: 1 / -1;
+  height: 2px;
+  background: rgba(0, 212, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.gi-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
+  transition: width 0.15s ease;
+}
+
+/* ─── Voice Display ─── */
+.voice-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 50px;
+  padding: 8px 20px;
+  backdrop-filter: blur(12px);
+  animation: slide-in-up 0.3s ease, fade-in 0.3s ease;
+}
+
+.vd-icon { font-size: 1rem; }
+
+.vd-text {
+  font-size: 0.9rem;
+  color: var(--accent-cyan);
+  letter-spacing: 1px;
+}
+
+/* ─── Corner Decorations ─── */
+.hud-corner-deco {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 2px solid transparent;
+  animation: corner-expand 0.5s ease forwards;
+}
+
+.top-left-deco {
+  top: 8px; left: 8px;
+  border-top-color: var(--accent-cyan);
+  border-left-color: var(--accent-cyan);
+}
+.top-right-deco {
+  top: 8px; right: 8px;
+  border-top-color: var(--accent-cyan);
+  border-right-color: var(--accent-cyan);
+}
+.bot-left-deco {
+  bottom: 8px; left: 8px;
+  border-bottom-color: var(--accent-cyan);
+  border-left-color: var(--accent-cyan);
+}
+.bot-right-deco {
+  bottom: 8px; right: 8px;
+  border-bottom-color: var(--accent-cyan);
+  border-right-color: var(--accent-cyan);
+}

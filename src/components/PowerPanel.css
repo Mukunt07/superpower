@@ -1,0 +1,266 @@
+.panel-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 60px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: all var(--transition-mid);
+  backdrop-filter: blur(10px);
+}
+
+.panel-toggle:hover {
+  background: rgba(0, 212, 255, 0.15);
+  box-shadow: -4px 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.panel-toggle.open {
+  right: 280px;
+}
+
+.toggle-arrow {
+  transition: transform var(--transition-mid);
+}
+
+/* ─── Panel ─── */
+.power-panel {
+  position: absolute;
+  top: 0;
+  right: -290px;
+  width: 280px;
+  height: 100%;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  z-index: 90;
+  transition: right var(--transition-slow);
+  border-radius: 16px 0 0 16px;
+  border-right: none;
+}
+
+.power-panel.visible {
+  right: 0;
+}
+
+/* ─── Header ─── */
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-logo {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.8));
+  animation: float 3s ease infinite;
+}
+
+.panel-title {
+  font-size: 1rem;
+  color: var(--accent-cyan);
+  text-shadow: var(--glow-cyan);
+  letter-spacing: 3px;
+  margin: 0;
+}
+
+.panel-subtitle {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* ─── Gesture Badge ─── */
+.gesture-badge {
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.badge-label {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 2px;
+}
+
+.badge-value {
+  font-size: 0.7rem;
+  color: var(--accent-gold);
+  letter-spacing: 1.5px;
+  text-shadow: var(--glow-gold);
+}
+
+.confidence-bar {
+  height: 3px;
+  background: rgba(0, 212, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-gold));
+  border-radius: 2px;
+  transition: width 0.2s ease;
+}
+
+/* ─── Power OFF ─── */
+.power-off-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.power-off-btn:hover,
+.power-off-btn.active {
+  background: rgba(255, 34, 68, 0.1);
+  border-color: rgba(255, 34, 68, 0.3);
+  color: var(--accent-red);
+}
+
+/* ─── Power List ─── */
+.power-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+/* ─── Power Card ─── */
+.power-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.power-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--power-color, #00d4ff), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.power-card:hover::before,
+.power-card.active::before {
+  opacity: 0.07;
+}
+
+.power-card:hover {
+  border-color: var(--power-color, rgba(0, 212, 255, 0.4));
+  transform: translateX(-2px);
+}
+
+.power-card.active {
+  border-color: var(--power-color, var(--accent-cyan));
+  box-shadow: 0 0 15px -5px var(--power-color, var(--accent-cyan));
+  animation: power-activate 0.4s ease;
+}
+
+.card-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 0 6px var(--power-color, rgba(0, 212, 255, 0.6)));
+  flex-shrink: 0;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-name {
+  font-size: 0.65rem;
+  color: #e0e8ff;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-gesture,
+.card-voice {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-active-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 212, 255, 0.1);
+  border-radius: 50px;
+  padding: 2px 7px;
+  font-size: 0.6rem;
+  color: var(--power-color, var(--accent-cyan));
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.active-dot {
+  width: 5px;
+  height: 5px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: energy-pulse 1s ease infinite;
+}
+
+/* ─── Footer ─── */
+.panel-footer {
+  border-top: 1px solid rgba(0, 212, 255, 0.1);
+  padding-top: 8px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
