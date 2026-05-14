@@ -11,7 +11,7 @@ export const CameraView: React.FC = () => {
   const voiceRef = useRef<VoiceEngine | null>(null);
 
   const {
-    activePower, setActivePower,
+    activePower,
     setDetectedGesture, setGestureConfidence,
     setHandLandmarks, setPoseLandmarks, setFaceLandmarks,
     setFps, setVoiceCommand, setVoiceListening,
@@ -31,13 +31,10 @@ export const CameraView: React.FC = () => {
       try {
         setLoadMsg('Loading Hand Tracking Model...');
         await engine.init(videoRef.current!, canvasRef.current!, {
-          onGestureChange: (gesture, power, confidence) => {
+          onGestureChange: (gesture, _power, confidence) => {
             setDetectedGesture(gesture as any);
             setGestureConfidence(confidence);
-            // Auto-activate power if confidence high
-            if (confidence > 0.75 && power !== 'none') {
-              setActivePower(power);
-            }
+            // Auto-activation removed: power selection is manual only
           },
           onHandLandmarks: setHandLandmarks,
           onPoseLandmarks: setPoseLandmarks,
@@ -54,8 +51,8 @@ export const CameraView: React.FC = () => {
         const voice = new VoiceEngine(engine.gestureClassifierRef);
         voiceRef.current = voice;
         voice.init();
-        voice.onCommand = (power, transcript) => {
-          setActivePower(power);
+        voice.onCommand = (_power, transcript) => {
+          // Auto-activation removed: power selection is manual only
           setVoiceCommand(transcript);
           setTimeout(() => setVoiceCommand(''), 3000);
         };

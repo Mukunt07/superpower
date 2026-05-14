@@ -1,5 +1,5 @@
 import React from 'react';
-import { useStore, POWERS, type PowerType } from '../store/useStore';
+import { useStore, POWERS } from '../store/useStore';
 import './PowerPanel.css';
 
 export const PowerPanel: React.FC = () => {
@@ -63,7 +63,7 @@ export const PowerPanel: React.FC = () => {
 
         {/* Footer */}
         <div className="panel-footer font-ui">
-          <span>🎤 Say power name to activate</span>
+          <span>Select power to activate effects</span>
         </div>
       </aside>
     </>
