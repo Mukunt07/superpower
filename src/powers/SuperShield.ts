@@ -61,12 +61,7 @@ export class SuperShield {
     GlowRenderer.drawHexGrid(ctx, cx, cy, r * 0.9, '#3b82f6', 4);
 
     // Shield fill
-    const shieldGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    shieldGrad.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
-    shieldGrad.addColorStop(0.7, 'rgba(59, 130, 246, 0.12)');
-    shieldGrad.addColorStop(0.9, 'rgba(59, 130, 246, 0.25)');
-    shieldGrad.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
-    ctx.fillStyle = shieldGrad;
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
@@ -76,8 +71,6 @@ export class SuperShield {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = `rgba(59, 130, 246, ${0.8 + 0.2 * Math.sin(this.phase * 4)})`;
     ctx.lineWidth = 3;
-    ctx.shadowBlur = 25;
-    ctx.shadowColor = '#3b82f6';
     ctx.stroke();
 
     // Inner ring
@@ -86,9 +79,7 @@ export class SuperShield {
     ctx.arc(cx, cy, r * 0.85 * pulse, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(147, 197, 253, 0.4)';
     ctx.lineWidth = 1.5;
-    ctx.shadowBlur = 10;
     ctx.stroke();
-    ctx.shadowBlur = 0;
 
     // Electric arcs on edge
     ctx.save();

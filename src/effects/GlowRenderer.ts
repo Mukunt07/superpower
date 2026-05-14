@@ -10,7 +10,7 @@ export class LightningRenderer {
     x2: number, y2: number,
     color: string,
     width = 2,
-    depth = 5,
+    depth = 3,
     spread = 0.4
   ): void {
     if (depth === 0) {
@@ -19,18 +19,15 @@ export class LightningRenderer {
       ctx.lineTo(x2, y2);
       ctx.strokeStyle = color;
       ctx.lineWidth = width;
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = color;
       ctx.stroke();
-      ctx.shadowBlur = 0;
       return;
     }
 
     const mx = (x1 + x2) / 2 + randomBetween(-spread * 100, spread * 100);
     const my = (y1 + y2) / 2 + randomBetween(-spread * 30, spread * 30);
 
-    LightningRenderer.drawBolt(ctx, x1, y1, mx, my, color, width * 0.8, depth - 1, spread);
-    LightningRenderer.drawBolt(ctx, mx, my, x2, y2, color, width * 0.8, depth - 1, spread);
+    LightningRenderer.drawBolt(ctx, x1, y1, mx, my, color, width, depth - 1, spread);
+    LightningRenderer.drawBolt(ctx, mx, my, x2, y2, color, width, depth - 1, spread);
 
     // Branch
     if (depth > 2 && Math.random() > 0.6) {
@@ -78,13 +75,19 @@ export class RuneAnimator {
     ctx.translate(cx, cy);
 
     // Outer ring
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = color;
     ctx.stroke();
+
+    // Outer glow pass
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
 
     // Rotating rune segments
     ctx.rotate(this.angle);
@@ -112,8 +115,6 @@ export class RuneAnimator {
       ctx.arc(0, 0, r, startAngle, endAngle);
       ctx.strokeStyle = color;
       ctx.lineWidth = 3;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = color;
       ctx.stroke();
 
       // Tick marks
@@ -132,9 +133,7 @@ export class RuneAnimator {
   ): void {
     // Draw triangle pattern
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = color;
+    ctx.lineWidth = 2;
 
     // Upward triangle
     ctx.beginPath();
@@ -169,35 +168,37 @@ export class GlowRenderer {
     landmarks: Array<{ x: number; y: number }>,
     connections: [number, number][],
     color: string,
-    glowSize = 20,
     lineWidth = 3
   ): void {
     ctx.save();
-    ctx.shadowBlur = glowSize;
-    ctx.shadowColor = color;
     ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
     ctx.lineCap = 'round';
 
-    for (const [a, b] of connections) {
-      if (!landmarks[a] || !landmarks[b]) continue;
+    // Fast glow: Draw multiple lines with increasing width and decreasing alpha
+    const passes = 3;
+    for (let i = passes; i > 0; i--) {
+      ctx.globalAlpha = 0.2 / i;
+      ctx.lineWidth = lineWidth + (i * 8);
+      
       ctx.beginPath();
-      ctx.moveTo(landmarks[a].x, landmarks[a].y);
-      ctx.lineTo(landmarks[b].x, landmarks[b].y);
+      for (const [a, b] of connections) {
+        if (!landmarks[a] || !landmarks[b]) continue;
+        ctx.moveTo(landmarks[a].x, landmarks[a].y);
+        ctx.lineTo(landmarks[b].x, landmarks[b].y);
+      }
       ctx.stroke();
     }
 
-    // Second pass for extra glow
-    ctx.globalAlpha = 0.4;
-    ctx.shadowBlur = glowSize * 2;
-    ctx.lineWidth = lineWidth * 0.5;
+    // Core line
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
     for (const [a, b] of connections) {
       if (!landmarks[a] || !landmarks[b]) continue;
-      ctx.beginPath();
       ctx.moveTo(landmarks[a].x, landmarks[a].y);
       ctx.lineTo(landmarks[b].x, landmarks[b].y);
-      ctx.stroke();
     }
+    ctx.stroke();
 
     ctx.restore();
   }

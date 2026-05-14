@@ -18,7 +18,7 @@ export interface Particle {
   trailLength: number;
 }
 
-const MAX_PARTICLES = 3000;
+const MAX_PARTICLES = 1500;
 
 export class ParticleSystem {
   private particles: Particle[] = [];
@@ -215,9 +215,12 @@ export class ParticleSystem {
     ctx.save();
 
     for (const p of this.particles) {
-      ctx.globalAlpha = clamp(p.alpha, 0, 1);
+      const alpha = clamp(p.alpha, 0, 1);
+      if (alpha < 0.05) continue;
 
-      // Draw trail
+      ctx.globalAlpha = alpha;
+
+      // Draw trail (optimized)
       if (p.trail.length > 1) {
         ctx.beginPath();
         ctx.moveTo(p.trail[0].x, p.trail[0].y);
@@ -225,47 +228,59 @@ export class ParticleSystem {
           ctx.lineTo(p.trail[i].x, p.trail[i].y);
         }
         ctx.strokeStyle = p.color;
-        ctx.lineWidth = p.size * 0.4;
-        ctx.globalAlpha = clamp(p.alpha * 0.5, 0, 1);
+        ctx.lineWidth = p.size * 0.6;
+        ctx.globalAlpha = alpha * 0.4;
         ctx.stroke();
-        ctx.globalAlpha = clamp(p.alpha, 0, 1);
+        ctx.globalAlpha = alpha;
       }
 
       switch (p.type) {
         case 'spark':
         case 'electric': {
-          ctx.shadowBlur = 8;
-          ctx.shadowColor = p.color;
           ctx.fillStyle = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
-          ctx.shadowBlur = 0;
+          
+          // Light core
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
+          ctx.fill();
           break;
         }
         case 'fire': {
-          const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-          grad.addColorStop(0, '#ffffff');
-          grad.addColorStop(0.3, p.color);
-          grad.addColorStop(1, 'transparent');
-          ctx.fillStyle = grad;
+          ctx.fillStyle = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Outer fuzz (fast glow)
+          ctx.globalAlpha = alpha * 0.3;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
           ctx.fill();
           break;
         }
         case 'orb': {
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = p.color;
-          const grad2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
-          grad2.addColorStop(0, '#ffffff');
-          grad2.addColorStop(0.5, p.color);
-          grad2.addColorStop(1, 'transparent');
-          ctx.fillStyle = grad2;
+          // Inner core
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Main color
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
-          ctx.shadowBlur = 0;
+          
+          // Outer glow ring (much faster than shadowBlur)
+          ctx.globalAlpha = alpha * 0.4;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
+          ctx.fill();
           break;
         }
         case 'star': {
@@ -273,9 +288,11 @@ export class ParticleSystem {
           ctx.translate(p.x, p.y);
           ctx.rotate(p.rotation);
           ctx.fillStyle = p.color;
-          ctx.shadowBlur = 6;
-          ctx.shadowColor = p.color;
           this.drawStar(ctx, 0, 0, 4, p.size, p.size * 0.4);
+          
+          // Glow pass for star
+          ctx.globalAlpha = alpha * 0.5;
+          this.drawStar(ctx, 0, 0, 4, p.size * 1.5, p.size * 0.6);
           ctx.restore();
           break;
         }
@@ -289,7 +306,6 @@ export class ParticleSystem {
     }
 
     ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
     ctx.restore();
   }
 

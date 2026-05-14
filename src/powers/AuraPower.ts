@@ -73,14 +73,14 @@ export class AuraPower {
       GlowRenderer.drawBodyOutline(
         ctx, mappedPose, POSE_CONNECTIONS,
         `hsl(${150 + Math.sin(this.colorCycle) * 40}, 100%, 60%)`,
-        25, 4
+        4
       );
 
       // Second glow pass (outer aura)
       GlowRenderer.drawBodyOutline(
         ctx, mappedPose, POSE_CONNECTIONS,
         `hsl(${150 + Math.sin(this.colorCycle + 1) * 40}, 80%, 70%)`,
-        50, 2
+        2
       );
 
       // Joint orbs

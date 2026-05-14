@@ -62,7 +62,7 @@ export class CameraEngine {
 
     // Init powers
     this.shield = new StrangeShield();
-    this.portal = new StrangePortal(canvas.width / 2, canvas.height / 2);
+    this.portal = new StrangePortal();
     this.hud = new IronManHUD();
     this.blast = new EnergyBlast();
     this.lightning = new LightningPower();
@@ -97,7 +97,7 @@ export class CameraEngine {
 
   private syncCanvasSize(): void {
     const { videoWidth, videoHeight } = this.video;
-    if (videoWidth && videoHeight) {
+    if (videoWidth && videoHeight && (this.canvas.width !== videoWidth || this.canvas.height !== videoHeight)) {
       this.canvas.width = videoWidth;
       this.canvas.height = videoHeight;
     }
@@ -112,7 +112,7 @@ export class CameraEngine {
     // FPS counter
     this.frameCount++;
     this.fpsTimer += dt;
-    if (this.fpsTimer >= 0.5) {
+    if (this.fpsTimer >= 1.0) {
       this.fps = Math.round(this.frameCount / this.fpsTimer);
       this.frameCount = 0;
       this.fpsTimer = 0;
@@ -138,10 +138,15 @@ export class CameraEngine {
     ctx.drawImage(video, 0, 0, W, H);
     ctx.restore();
 
-    // Run detection
-    const handResult = this.handTracker.detect(video);
-    const poseResult = this.poseTracker.detect(video);
-    const faceResult = this.faceTracker.detect(video);
+    // Detection logic
+    // We need hands for most powers and for gesture recognition in 'none' state
+    const needsHands = this.activePower === 'none' || ['strange-shield', 'energy-blast', 'lightning', 'telekinesis'].includes(this.activePower);
+    const needsPose = this.activePower === 'none' || ['lightning', 'aura', 'super-shield'].includes(this.activePower);
+    const needsFace = this.activePower === 'ironman-hud';
+
+    if (needsHands) this.handTracker.detect(video);
+    if (needsPose) this.poseTracker.detect(video);
+    if (needsFace) this.faceTracker.detect(video);
 
     const hands = this.handTracker.getHandLandmarks();
     const pose = this.poseTracker.getPoseLandmarks();
@@ -152,8 +157,11 @@ export class CameraEngine {
     this.callbacks.onFaceLandmarks(face);
 
     // Classify gesture
-    const { gesture, power, confidence } = this.gestureClassifier.classify(hands, pose);
-    this.callbacks.onGestureChange(gesture, power, confidence);
+    // Throttled slightly to avoid spiking CPU, but enough to feel fast
+    if (this.frameCount % 2 === 0) {
+      const { gesture, power, confidence } = this.gestureClassifier.classify(hands, pose);
+      this.callbacks.onGestureChange(gesture, power, confidence);
+    }
 
     // Draw active power
     this.renderPower(dt, hands, pose, face, W, H);
@@ -172,6 +180,8 @@ export class CameraEngine {
     W: number, H: number
   ): void {
     const p = this.activePower;
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = 'lighter';
 
     switch (p) {
       case 'strange-shield':
@@ -180,8 +190,7 @@ export class CameraEngine {
         break;
 
       case 'strange-portal':
-        this.portal.setCenter(W / 2, H / 2);
-        this.portal.update(dt);
+        this.portal.update(dt, hands, W, H);
         this.portal.draw(this.ctx);
         break;
 
@@ -215,6 +224,7 @@ export class CameraEngine {
         this.superShield.draw(this.ctx, pose, W, H);
         break;
     }
+    this.ctx.restore();
   }
 
   private drawLandmarks(

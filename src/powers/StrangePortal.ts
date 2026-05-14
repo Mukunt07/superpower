@@ -1,5 +1,6 @@
 import { ParticleSystem } from '../effects/ParticleSystem';
-import { randomBetween } from '../utils/mathUtils';
+import { randomBetween, landmarkToCanvas, lerp } from '../utils/mathUtils';
+import type { HandLandmarks } from '../mediapipe/HandTracker';
 
 export class StrangePortal {
   private particles = new ParticleSystem();
@@ -12,117 +13,133 @@ export class StrangePortal {
   private outerAngle = 0;
   private distortOffset = 0;
 
-  constructor(cx: number, cy: number) {
-    this.cx = cx;
-    this.cy = cy;
+  constructor() {
+    // Center and radius are set during update
   }
 
-  update(dt: number): void {
+  update(dt: number, hands: HandLandmarks[], canvasW: number, canvasH: number): void {
     this.phase += dt;
-    this.innerAngle += dt * 3.5;
-    this.outerAngle -= dt * 1.8;
+    this.innerAngle += dt * 3;
+    this.outerAngle -= dt * 1.5;
     this.distortOffset += dt * 2;
-    this.radius = Math.min(this.targetRadius, this.radius + dt * 120);
     this.particles.update(dt);
 
+    if (hands.length === 0) {
+      this.radius = Math.max(0, this.radius - dt * 200);
+      return;
+    }
+
+    const hand1 = hands[0];
+    const hand2 = hands[1] ?? null;
+
+    const p1 = landmarkToCanvas(hand1[9], canvasW, canvasH);
+    
+    // Set center to first hand
+    this.cx = p1.x;
+    this.cy = p1.y;
+
+    if (hand2) {
+      // Use distance between hands to control radius
+      const p2 = landmarkToCanvas(hand2[9], canvasW, canvasH);
+      const d = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
+      this.targetRadius = Math.max(60, Math.min(canvasW * 0.4, d * 0.6));
+    } else {
+      this.targetRadius = 120;
+    }
+
+    // Smooth radius transition
+    this.radius = lerp(this.radius, this.targetRadius, 0.1);
+
     // Golden sparks around edge
-    if (Math.random() > 0.2) {
+    if (this.radius > 10 && Math.random() > 0.15) {
       const angle = Math.random() * Math.PI * 2;
-      const r = this.radius + randomBetween(-8, 8);
+      const r = this.radius + randomBetween(-10, 10);
       this.particles.spawn({
         x: this.cx + Math.cos(angle) * r,
         y: this.cy + Math.sin(angle) * r,
-        vx: Math.cos(angle) * randomBetween(1, 4),
-        vy: Math.sin(angle) * randomBetween(1, 4),
+        vx: Math.cos(angle) * randomBetween(1, 5),
+        vy: Math.sin(angle) * randomBetween(1, 5),
         color: Math.random() > 0.3 ? '#ffd700' : '#ffaa00',
         type: 'spark',
         size: randomBetween(2, 6),
-        maxLife: randomBetween(0.3, 0.8),
-        trailLength: 8,
+        maxLife: randomBetween(0.4, 1.0),
+        trailLength: 10,
       });
     }
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
     const { cx, cy, radius } = this;
-    if (radius < 5) return;
+    if (radius < 10) return;
 
     ctx.save();
 
-    // ── Portal interior (void + distortion) ─────────────────────────────────
-    // Dark void center
-    const voidGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 0.85);
-    voidGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
-    voidGrad.addColorStop(0.5, 'rgba(5, 0, 30, 0.8)');
-    voidGrad.addColorStop(0.8, 'rgba(60, 20, 120, 0.5)');
-    voidGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = voidGrad;
+    // ── Realistic Multi-pass Portal ─────────────────────────────────────────
+    
+    // 1. Outer golden atmospheric glow
+    const atmosphericGrad = ctx.createRadialGradient(cx, cy, radius * 0.8, cx, cy, radius * 1.5);
+    atmosphericGrad.addColorStop(0, 'rgba(255, 215, 0, 0.2)');
+    atmosphericGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = atmosphericGrad;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius * 0.9, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius * 1.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Inner swirling rings
-    for (let i = 0; i < 3; i++) {
-      const ir = radius * (0.4 + i * 0.15);
-      const alpha = 0.4 - i * 0.1;
+    // 2. Dark void center
+    ctx.fillStyle = 'rgba(10, 5, 20, 0.95)';
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 0.92, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3. Inner shimmering nebula effect
+    for (let i = 0; i < 4; i++) {
+      const ir = radius * (0.3 + i * 0.18);
+      const alpha = 0.5 - i * 0.1;
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(this.innerAngle + i * 1.2);
+      ctx.rotate(this.innerAngle + i * 0.8);
       ctx.beginPath();
-      ctx.arc(0, 0, ir, 0, Math.PI * 1.7);
-      ctx.strokeStyle = `rgba(180, 100, 255, ${alpha})`;
-      ctx.lineWidth = 2;
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#8b5cf6';
+      ctx.arc(0, 0, ir, 0, Math.PI * 1.6);
+      ctx.strokeStyle = `rgba(150, 80, 255, ${alpha})`;
+      ctx.lineWidth = 3;
       ctx.stroke();
       ctx.restore();
     }
 
-    // Outer golden ring segments
+    // 4. Main golden ring passes
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(this.outerAngle);
-    const segCount = 12;
-    const segGap = 0.08;
+    
+    // Broad ring pass
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Segmented ring pass
+    const segCount = 10;
+    const segGap = 0.12;
     for (let i = 0; i < segCount; i++) {
       const start = (i / segCount) * Math.PI * 2 + segGap;
       const end = ((i + 1) / segCount) * Math.PI * 2 - segGap;
       ctx.beginPath();
       ctx.arc(0, 0, radius, start, end);
       ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 4;
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = '#ffaa00';
+      ctx.lineWidth = 5;
       ctx.stroke();
-    }
-    ctx.restore();
-
-    // Second outer ring (counter-rotating)
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(-this.outerAngle * 1.5);
-    for (let i = 0; i < 6; i++) {
-      const start = (i / 6) * Math.PI * 2 + 0.2;
-      const end = ((i + 0.6) / 6) * Math.PI * 2;
+      
+      // White hot highlight on segment
       ctx.beginPath();
-      ctx.arc(0, 0, radius + 8, start, end);
-      ctx.strokeStyle = 'rgba(255, 200, 50, 0.5)';
-      ctx.lineWidth = 2;
+      ctx.arc(0, 0, radius, start + 0.1, start + 0.3);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     }
     ctx.restore();
 
-    // Portal glow edge
-    ctx.shadowBlur = 40;
-    ctx.shadowColor = '#ffd700';
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Particles
+    // 5. Particles
     this.particles.render(ctx);
 
     ctx.restore();

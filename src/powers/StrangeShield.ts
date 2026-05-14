@@ -15,72 +15,93 @@ export class StrangeShield {
     this.rune.update(dt);
     this.intensity = Math.min(1, this.intensity + dt * 2);
 
-    const hand = hands[0];
-    if (!hand) return;
+    if (hands.length === 0) {
+      this.particles.update(dt);
+      return;
+    }
 
-    const palm = landmarkToCanvas(hand[9], canvasW, canvasH);
-    const wrist = landmarkToCanvas(hand[0], canvasW, canvasH);
-    const palmDist = Math.sqrt((palm.x - wrist.x) ** 2 + (palm.y - wrist.y) ** 2);
-    this.shieldRadius = Math.max(60, Math.min(130, palmDist * 2.2));
+    const hand1 = hands[0];
+    const hand2 = hands[1] ?? null;
+
+    const palm = landmarkToCanvas(hand1[9], canvasW, canvasH);
+    
+    if (hand2) {
+      // Two hands: distance between hands controls radius
+      const palm2 = landmarkToCanvas(hand2[9], canvasW, canvasH);
+      const d = Math.sqrt((palm.x - palm2.x) ** 2 + (palm.y - palm2.y) ** 2);
+      this.shieldRadius = Math.max(80, Math.min(300, d * 0.8));
+    } else {
+      // One hand: distance from wrist to palm controls radius
+      const wrist = landmarkToCanvas(hand1[0], canvasW, canvasH);
+      const palmDist = Math.sqrt((palm.x - wrist.x) ** 2 + (palm.y - wrist.y) ** 2);
+      this.shieldRadius = Math.max(60, Math.min(140, palmDist * 2.5));
+    }
 
     // Fire sparks around shield
-    if (Math.random() > 0.3) {
+    if (Math.random() > 0.25) {
       const angle = Math.random() * Math.PI * 2;
-      const sr = this.shieldRadius + randomBetween(-5, 10);
+      const sr = this.shieldRadius + randomBetween(-10, 15);
       this.particles.spawn({
         x: palm.x + Math.cos(angle) * sr,
         y: palm.y + Math.sin(angle) * sr,
-        vx: Math.cos(angle) * randomBetween(1, 3),
-        vy: Math.sin(angle) * randomBetween(1, 3) - 1,
-        color: Math.random() > 0.5 ? '#ff6a00' : '#ffaa33',
+        vx: Math.cos(angle) * randomBetween(1, 4),
+        vy: Math.sin(angle) * randomBetween(1, 4) - 0.5,
+        color: Math.random() > 0.4 ? '#ff6a00' : '#ffcc33',
         type: 'spark',
-        size: randomBetween(2, 5),
-        maxLife: randomBetween(0.3, 0.7),
-        trailLength: 6,
+        size: randomBetween(2, 6),
+        maxLife: randomBetween(0.4, 0.9),
+        trailLength: 8,
       });
-    }
-
-    // Core fire particles
-    if (Math.random() > 0.5) {
-      this.particles.spawnFireColumn(palm.x, palm.y, 15, '#ff4400', '#ffaa00');
     }
 
     this.particles.update(dt);
   }
 
   draw(ctx: CanvasRenderingContext2D, hands: HandLandmarks[], canvasW: number, canvasH: number): void {
-    if (!hands[0]) return;
+    if (hands.length === 0) return;
     const palm = landmarkToCanvas(hands[0][9], canvasW, canvasH);
 
     ctx.save();
     ctx.globalAlpha = this.intensity;
 
-    // Shield background glow
+    // ── Realistic Multi-pass Shield ──────────────────────────────────────────
+    
+    // 1. Broad outer glow
+    ctx.fillStyle = 'rgba(255, 106, 0, 0.05)';
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, this.shieldRadius * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Main shield body
     const grad = ctx.createRadialGradient(palm.x, palm.y, 0, palm.x, palm.y, this.shieldRadius);
-    grad.addColorStop(0, 'rgba(255, 106, 0, 0.15)');
-    grad.addColorStop(0.7, 'rgba(255, 106, 0, 0.05)');
+    grad.addColorStop(0, 'rgba(255, 106, 0, 0.2)');
+    grad.addColorStop(0.7, 'rgba(255, 106, 0, 0.1)');
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(palm.x, palm.y, this.shieldRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Rune animation
+    // 3. Rune animation
     this.rune.draw(ctx, palm.x, palm.y, this.shieldRadius, '#ff6a00');
 
-    // Particles
-    this.particles.render(ctx);
-
-    // Pulsing edge ring
-    const pulse = 0.7 + 0.3 * Math.sin(this.phase * 4);
+    // 4. Pulsing edge ring
+    const pulse = 0.8 + 0.2 * Math.sin(this.phase * 5);
     ctx.beginPath();
-    ctx.arc(palm.x, palm.y, this.shieldRadius * pulse, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(255, 180, 50, ${0.6 * pulse})`;
-    ctx.lineWidth = 3;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#ff6a00';
+    ctx.arc(palm.x, palm.y, this.shieldRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 200, 50, ${0.7 * pulse})`;
+    ctx.lineWidth = 4;
     ctx.stroke();
-    ctx.shadowBlur = 0;
+    
+    // Inner bright ring
+    ctx.beginPath();
+    ctx.arc(palm.x, palm.y, this.shieldRadius * 0.95, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 5. Particles
+    this.particles.render(ctx);
 
     ctx.restore();
   }
